@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "timestamp": "2026-04-04T23:57:51",
+    "method": "cross-system structural analysis",
+    "systems": {
+      "excelsior": {
+        "version": "custom",
+        "loc": 656
+      },
+      "smolagents": {
+        "version": "1.24.0",
+        "loc": 6384
+      },
+      "pydantic-ai": {
+        "version": "1.77.0",
+        "loc": 9064
+      }
+    }
+  },
+  "pattern_counts": {
+    "excelsior": {
+      "message_construction": 22,
+      "tool_schema_gen": 21,
+      "tool_permission": 3,
+      "system_prompt": 9,
+      "token_accounting": 36,
+      "cost_budget": 86,
+      "context_window": 18,
+      "routing_dispatch": 17,
+      "loop_termination": 10,
+      "checkpoint_state": 10,
+      "retry_error": 10
+    },
+    "smolagents": {
+      "message_construction": 99,
+      "tool_schema_gen": 145,
+      "tool_permission": 0,
+      "system_prompt": 111,
+      "token_accounting": 37,
+      "cost_budget": 0,
+      "context_window": 18,
+      "routing_dispatch": 0,
+      "loop_termination": 69,
+      "checkpoint_state": 16,
+      "retry_error": 5
+    },
+    "pydantic-ai": {
+      "message_construction": 368,
+      "tool_schema_gen": 479,
+      "tool_permission": 7,
+      "system_prompt": 263,
+      "token_accounting": 50,
+      "cost_budget": 22,
+      "context_window": 27,
+      "routing_dispatch": 5,
+      "loop_termination": 37,
+      "checkpoint_state": 11,
+      "retry_error": 284
+    }
+  },
+  "pattern_density_per_100loc": {
+    "excelsior": {
+      "message_construction": 3.4,
+      "tool_schema_gen": 3.2,
+      "tool_permission": 0.5,
+      "system_prompt": 1.4,
+      "token_accounting": 5.5,
+      "cost_budget": 13.1,
+      "context_window": 2.7,
+      "routing_dispatch": 2.6,
+      "loop_termination": 1.5,
+      "checkpoint_state": 1.5,
+      "retry_error": 1.5
+    },
+    "smolagents": {
+      "message_construction": 1.6,
+      "tool_schema_gen": 2.3,
+      "tool_permission": 0.0,
+      "system_prompt": 1.7,
+      "token_accounting": 0.6,
+      "cost_budget": 0.0,
+      "context_window": 0.3,
+      "routing_dispatch": 0.0,
+      "loop_termination": 1.1,
+      "checkpoint_state": 0.3,
+      "retry_error": 0.1
+    },
+    "pydantic-ai": {
+      "message_construction": 4.1,
+      "tool_schema_gen": 5.3,
+      "tool_permission": 0.1,
+      "system_prompt": 2.9,
+      "token_accounting": 0.6,
+      "cost_budget": 0.2,
+      "context_window": 0.3,
+      "routing_dispatch": 0.1,
+      "loop_termination": 0.4,
+      "checkpoint_state": 0.1,
+      "retry_error": 3.1
+    }
+  },
+  "our_gap_distribution": {
+    "message_construction": 8,
+    "tool_schema_gen": 9,
+    "tool_permission": 4,
+    "system_prompt": 4,
+    "token_accounting": 3,
+    "cost_budget": 4,
+    "context_window": 4,
+    "routing_dispatch": 3,
+    "loop_termination": 4,
+    "checkpoint_state": 3,
+    "retry_error": 0
+  }
+}

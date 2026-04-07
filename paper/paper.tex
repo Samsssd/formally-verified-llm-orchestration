@@ -1,0 +1,892 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tabularx}
+\usepackage{array}
+
+% --- Listings config ---
+\definecolor{leanblue}{RGB}{0,51,153}
+\definecolor{leangreen}{RGB}{0,128,0}
+\definecolor{leangray}{RGB}{128,128,128}
+\definecolor{bglight}{RGB}{248,248,248}
+
+\lstdefinelanguage{Lean4}{
+  keywords={def,theorem,lemma,structure,inductive,where,if,then,else,match,with,let,have,by,exact,unfold,split,cases,induction,rename_i,simp,omega,dsimp,rw,fun,some,none,true,false,Prop,Bool,Nat,String,List,Option,deriving},
+  sensitive=true,
+  morecomment=[l]{--},
+  morecomment=[n]{/-}{-/},
+  morestring=[b]",
+  keywordstyle=\color{leanblue}\bfseries,
+  commentstyle=\color{leangreen}\itshape,
+  stringstyle=\color{red!60!black},
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{bglight},
+  frame=single,
+  framerule=0.4pt,
+  numbers=left,
+  numberstyle=\tiny\color{leangray},
+  breaklines=true,
+  captionpos=b,
+  tabsize=2,
+  xleftmargin=2em,
+  framexleftmargin=1.5em,
+}
+
+% --- Hyperref config ---
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black,
+}
+
+% --- Title ---
+\title{Formally Verified Harness Engineering:\\
+  Using Lean~4 to Prove Correctness Properties\\
+  of LLM Orchestration Code}
+
+\author{Samy Djouder}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+% ============================================================================
+\begin{abstract}
+% ============================================================================
+
+LLM orchestration frameworks coordinate multi-agent systems through
+shared state machines that manage token accounting, budget enforcement,
+and execution control flow. Despite widespread adoption, none of these
+frameworks provides formal specifications or machine-checked proofs of
+its core invariants. We present a three-phase empirical study applied
+to an 800-line Python orchestration harness backed by a Lean~4
+specification with 15 machine-checked theorems. Phase~1 generates
+420 mutants via \texttt{mutmut} to establish a population baseline
+(55\% raw, 80\% adjusted kill rate). Phase~2 tests 30 hand-crafted
+mutations against 4 verification methods---unit, integration,
+property-based, and formal---to measure their complementarity.
+Phase~3 derives 11 mutations by negating each conjunct of the Lean~4
+well-formedness predicate. We find that formal verification detects
+80\% of mutations within its scope but covers only 33\% of the mutation
+surface; property-based testing catches 3 mutations no other method
+detects; and one spec-guided mutation (replacing cost accumulation
+\texttt{+=} with assignment \texttt{=}) passes both the Lean~4 spec
+and all 65 tests, exposing a missing cost-monotonicity invariant.
+Structural analysis of smolagents and pydantic-ai confirms that 8 of
+11 gap categories are present in all three frameworks. All proofs
+compile without \texttt{sorry}; all artifacts are publicly available.
+
+\end{abstract}
+
+% ============================================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================================
+
+The adoption of large language models (LLMs) has driven the development
+of orchestration frameworks---software systems that coordinate multiple
+LLM-powered agents through shared state, tool registries, and control
+flow graphs~\cite{langgraph2024,crewai2024,autogen2024}. These
+frameworks implement invariants that matter in production: token counts
+must be tracked accurately for billing, budget limits must halt
+execution before overspend, and termination must be guaranteed to
+prevent runaway agent loops.
+
+No production LLM orchestration framework provides formal
+specifications or machine-checked proofs of these properties. The
+existing test suites for LangGraph, smolagents, and pydantic-ai
+exercise functional behavior but do not verify state machine
+invariants. A subtle off-by-one in a budget check or a missing cost
+accumulation can lead to unbounded API spending---a failure mode that
+unit tests are unlikely to exercise because it requires specific
+combinations of cost values at the budget boundary.
+
+This paper bridges formal verification (Lean~4) and mutation testing
+to characterize the \emph{formal/informal boundary}: the set of bugs
+that formal methods catch but testing misses, and the (larger) set
+that testing catches but formal methods cannot reach.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=*,nosep]
+  \item A Lean~4 specification of 5 well-formedness invariants for
+        LLM orchestration state machines, with 15 machine-checked
+        theorems covering safety, liveness, and synchronization
+        (\Cref{sec:spec}).
+  \item A three-phase mutation study comparing 4 verification
+        methods across 461 mutations (420 automated + 30 targeted
+        + 11 spec-guided, with partial overlap)
+        (\Cref{sec:method,sec:results}).
+  \item A spec-guided mutation technique that negates formal
+        invariants to produce semantically meaningful mutations,
+        exposing a concrete abstraction gap in the Lean~4 spec
+        (\Cref{sec:specguided}).
+  \item A cross-system structural analysis showing that the gap
+        taxonomy holds across three independent frameworks
+        (\Cref{sec:crosssystem}).
+\end{enumerate}
+
+\paragraph{Research questions.}
+\begin{description}[leftmargin=*,nosep]
+  \item[RQ1] How complementary are formal verification and
+    testing for detecting mutations in LLM orchestration code?
+  \item[RQ2] What fraction of the mutation surface falls within the
+    scope of a Lean~4 specification?
+  \item[RQ3] Does the gap taxonomy generalize beyond a single
+    implementation?
+\end{description}
+
+% ============================================================================
+\section{Background}
+\label{sec:background}
+% ============================================================================
+
+\subsection{LLM Orchestration Frameworks}
+
+An LLM orchestration framework manages the execution loop of one or
+more LLM-powered agents. The common architecture includes a
+\emph{state machine} tracking step counts, token usage, and costs;
+a \emph{tool registry} mapping function names to executable code;
+a \emph{routing layer} selecting which agent runs next; and a
+\emph{budget/context manager} enforcing resource limits. LangGraph~\cite{langgraph2024},
+CrewAI~\cite{crewai2024}, AutoGen~\cite{autogen2024},
+smolagents~\cite{smolagents2024}, and
+pydantic-ai~\cite{pydanticai2024} all follow this pattern.
+
+\subsection{Mutation Testing}
+
+Mutation testing evaluates test effectiveness by injecting small
+syntactic faults (mutants) into source code and checking whether tests
+detect them~\cite{demillo1978hints,jia2011analysis}. A mutant
+\emph{killed} by a test confirms the test exercises the mutated
+behavior; a \emph{surviving} mutant may indicate a test gap.
+The mutation score (killed/total) is the standard adequacy metric,
+though equivalent mutants---changes with no observable
+effect---inflate the denominator and require
+classification~\cite{papadakis2019mutation,ammann2014establishing}.
+Petrovi\'c and Ivankovi\'c~\cite{petrovic2018state} describe
+deployment of mutation testing at Google scale.
+
+\subsection{Lean~4}
+
+Lean~4 is a theorem prover and programming language with dependent
+types, tactic-based proofs, and a compiled
+runtime~\cite{demoura2021lean4}. We use it to state specifications
+as propositions and verify them with constructive proofs that the
+kernel checks exhaustively. A proven theorem holds for all inputs
+within the model's scope---unlike testing, which covers only the
+exercised inputs.
+
+% ============================================================================
+\section{System Under Study}
+\label{sec:system}
+% ============================================================================
+
+Our subject system, \textsc{excelsior-harness}, is an 8-module
+Python harness (780~LOC) built to the standard architecture
+described in \Cref{sec:background}:
+
+\begin{itemize}[nosep]
+  \item \texttt{state.py} (73~LOC): Immutable \texttt{AgentState}
+    with functional updates (\texttt{add\_message},
+    \texttt{record\_usage}, \texttt{checkpoint}, \texttt{terminate}).
+  \item \texttt{budget.py} (76~LOC): Per-model cost tracking with
+    hard USD ceiling and \texttt{BudgetExceeded} exception.
+  \item \texttt{tools.py} (138~LOC): Decorator-based tool
+    registration with JSON schema extraction from type hints.
+  \item \texttt{agents.py} (166~LOC): Role-based agents
+    (supervisor, worker) with per-agent tool permissions.
+  \item \texttt{graph.py} (112~LOC): Directed graph with
+    conditional edges for routing.
+  \item \texttt{context.py} (97~LOC): Tiktoken-based token counting
+    with truncation (keep system message + recent messages).
+  \item \texttt{orchestrator.py} (201~LOC): Main loop with
+    budget/step checks and exponential-backoff retry.
+  \item \texttt{\_types.py} (47~LOC): Shared enums and type aliases.
+\end{itemize}
+
+The harness uses mock LLM clients (no real API calls) for
+reproducibility. The test suite has 65 pytest tests: 40 unit,
+5 integration, and 20 property-based
+(Hypothesis~\cite{hypothesis2024}).
+
+% ============================================================================
+\section{Lean~4 Specification}
+\label{sec:spec}
+% ============================================================================
+
+We model the orchestrator as a state machine with explicit step,
+budget, token, and checkpoint counters.
+\Cref{lst:lean-core} shows the state structure and transition
+function (simplified for presentation; the full specification uses
+anonymous constructors and is available in the repository).
+
+\begin{lstlisting}[language=Lean4,caption={Orchestrator state and transition function (simplified from repository source).},label=lst:lean-core]
+structure OState where
+  step : Nat; maxSteps : Nat
+  cost : Nat; maxBudget : Nat
+  pTok : Nat; cTok : Nat; tTok : Nat
+  agent : String; done : Bool
+  reason : Option TerminationReason
+  ckpts : Nat
+
+def execStep (s : OState) (c : CallResult) (r : Route) : OState :=
+  if s.step >= s.maxSteps then            -- PATH 1: max_steps
+    { s with done := true, reason := some .max_steps }
+  else if s.cost + c.cost > s.maxBudget then -- PATH 2: budget
+    { s with step := s.step + 1, cost := s.cost + c.cost,
+      pTok := s.pTok + c.pTok, cTok := s.cTok + c.cTok,
+      tTok := s.tTok + c.pTok + c.cTok,
+      done := true, reason := some .budget_exceeded }
+  else match r with
+    | .finished => { ... }                -- PATH 3: task_complete
+    | .next ag => { ... }                 -- PATH 4: continue
+\end{lstlisting}
+
+\subsection{Well-Formedness Predicate}
+
+The specification is organized around a well-formedness predicate
+\texttt{wf} that conjoins five invariants:
+
+\begin{lstlisting}[language=Lean4,caption={Well-formedness predicate.},label=lst:wf]
+def wf (s : OState) : Prop :=
+  s.tTok = s.pTok + s.cTok                                 -- P1
+  /\ (s.reason != some .budget_exceeded -> s.cost <= s.maxBudget) -- P2
+  /\ s.ckpts <= s.step                                      -- P3
+  /\ s.step <= s.maxSteps + 1                                -- P4
+  /\ (s.reason = some .budget_exceeded -> s.done = true)     -- P5
+\end{lstlisting}
+
+\noindent
+\textbf{P1} (Token accounting): Total tokens equal prompt plus
+completion. \textbf{P2} (Budget safety): Cost does not exceed budget
+unless the system has already flagged budget exhaustion. \textbf{P3}
+(Checkpoint monotonicity): Checkpoint count never exceeds step count.
+\textbf{P4} (Step bound): Step count is bounded by
+$\texttt{maxSteps} + 1$. \textbf{P5} (Termination consistency):
+Budget exhaustion implies the done flag is set.
+
+P5 prevents a subtle interaction between the max-steps and
+budget-exceeded paths: without it, a state could carry
+\texttt{reason = budget\_exceeded} while \texttt{done = false},
+breaking downstream logic that checks \texttt{done} to decide
+whether to continue the loop.
+
+\subsection{Proven Theorems}
+
+\Cref{tab:theorems} lists the 14 theorems plus a capstone
+composition. All are machine-checked with no \texttt{sorry} and no
+axioms beyond the standard library.
+
+\begin{table}[htbp]
+\centering
+\caption{Machine-checked theorems.}
+\label{tab:theorems}
+\small
+\begin{tabular}{@{}llp{6cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Theorem} & \textbf{Property} \\
+\midrule
+1 & \texttt{step\_preserves\_wf} & All 5 invariants survive one step ($4 \times 5 = 20$ proof obligations) \\
+2 & \texttt{loop\_budget\_safe} & Budget ceiling across full loop (induction on fuel) \\
+3 & \texttt{loop\_terminates} & Loop terminates within \texttt{maxSteps} (bounded liveness) \\
+4 & \texttt{loop\_tokens} & Token accounting preserved across loop \\
+5 & \texttt{tool\_isolation} & Per-agent tool permissions enforced \\
+6 & \texttt{loop\_ckpts} & Checkpoints $\leq$ steps across loop \\
+\midrule
+7 & \texttt{step\_done\_at\_max} & Max-steps $\Rightarrow$ done \\
+8 & \texttt{step\_inc\_or\_done} & Step increments or execution terminates \\
+9 & \texttt{step\_maxSteps\_eq} & \texttt{maxSteps} is constant through execution \\
+10 & \texttt{step\_preserves\_tokens} & Token identity preserved per step \\
+11 & \texttt{step\_ckpt\_bounded} & Checkpoint bound per step \\
+12 & \texttt{continue\_adds\_ckpt} & Routing to next agent increments checkpoint \\
+13 & \texttt{max\_steps\_no\_ckpt} & Max-steps termination does not checkpoint \\
+14 & \texttt{no\_perms\_no\_tools} & No permissions entry $\Rightarrow$ no tool access \\
+\midrule
+C & \texttt{all\_invariants\_preserved} & Capstone: tokens $\wedge$ budget $\wedge$ checkpoints \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section{Study Design}
+\label{sec:method}
+% ============================================================================
+
+The study has three phases (\Cref{fig:phases}). Phase~1 gives
+unbiased population statistics but can only test against the pytest
+suite. Phase~2 enables multi-method comparison but is vulnerable to
+selection bias. Phase~3 derives mutations from the formal spec itself
+to probe the formal/informal boundary. The phases are complementary
+by design: Phase~1 validates that Phase~2's selection is
+representative, and Phase~3 targets exactly the behaviors that the
+Lean spec claims to verify.
+
+\begin{figure}[htbp]
+\centering
+\begin{tabular}{@{}ccc@{}}
+\fbox{\parbox{3.8cm}{\centering\textbf{Phase 1}\\420 mutmut mutants\\1 test suite\\Population baseline}} &
+$\longrightarrow$ &
+\fbox{\parbox{3.8cm}{\centering\textbf{Phase 2}\\30 hand-crafted\\4 methods\\Multi-method comparison}} \\[1.5em]
+& & $\downarrow$ \\[0.5em]
+& &
+\fbox{\parbox{3.8cm}{\centering\textbf{Phase 3}\\11 spec-guided\\Lean negation\\Boundary analysis}} \\
+\end{tabular}
+\caption{Three-phase study design. Phase~1 establishes baselines;
+Phase~2 compares methods; Phase~3 probes the specification boundary.}
+\label{fig:phases}
+\end{figure}
+
+\subsection{Phase 1: Automated Baseline}
+
+\texttt{mutmut}~2.5.1~\cite{mutmut2024} generated 420 AST-level
+mutants across all 8 source files. Each mutant was tested against the
+65-test suite. Survivors were classified into four tiers following
+Papadakis et al.~\cite{papadakis2019mutation}:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Equivalent} (76): No observable behavior change
+    (logging strings, enum repr methods, error message text).
+  \item \textbf{Test infrastructure} (12): Changes to
+    \texttt{MockResponse} or \texttt{MockLLMClient} defaults.
+  \item \textbf{Configuration} (40): Cost table rates, retry
+    parameters, default buffer sizes---tuning constants with no test
+    coverage by design.
+  \item \textbf{Real gap} (60): Mutations to arithmetic, control
+    flow, or state management in production code paths.
+\end{enumerate}
+
+We count the 8 ``suspicious'' mutants (timeout during testing)
+as killed, following \texttt{mutmut}'s convention. This gives
+232 killed, 188 survived.
+
+\subsection{Phase 2: Targeted Multi-Method Comparison}
+
+30 mutations were selected to cover all 4 semantic categories
+(logic, boundary, missing\_check, state) and all 8 source files.
+13 of 30 have direct Phase~1 counterparts (e.g., M10 $\leftrightarrow$
+mutant~\#69, M02 $\leftrightarrow$ mutant~\#64), mitigating selection
+bias. Each mutation was tested against 4 methods:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Unit tests}: 40 pytest tests across 7 test files.
+  \item \textbf{Integration tests}: 5 end-to-end orchestration runs.
+  \item \textbf{Property-based tests}: 20 Hypothesis tests
+    (13 mirror Lean invariants, 7 cover domain-specific properties).
+  \item \textbf{Lean~4 formal spec}: 10 of 30 mutations have spec
+    equivalents; detection via \texttt{lake build} pass/fail.
+\end{enumerate}
+
+We also planned LLM-based code review as a 5th method but could not
+run it (no API key available during the study). We exclude it from
+all analysis rather than report zeros.
+
+\subsection{Phase 3: Spec-Guided Mutation Generation}
+\label{sec:specguided-method}
+
+For each conjunct $P_i$ of the \texttt{wf} predicate, we identify
+the corresponding Lean expression and Python implementation, then
+construct 2--3 minimal mutations that negate or weaken $P_i$:
+
+\begin{itemize}[nosep]
+  \item \textbf{P1}: Drop completion tokens from total, or
+    double-count prompt tokens.
+  \item \textbf{P2}: Invert budget comparison, weaken to off-by-one,
+    or replace accumulation (\texttt{+=}) with assignment (\texttt{=}).
+  \item \textbf{P3}: Double checkpoint increment, or add a spurious
+    checkpoint on the max-steps path.
+  \item \textbf{P4}: Double or skip the step increment.
+  \item \textbf{P5}: Clear the done flag on budget-exceeded, or
+    assign the wrong termination reason.
+\end{itemize}
+
+This produces 11 mutations, each with a clear semantic interpretation
+tied to a specific safety property. Each is tested against Lean
+(\texttt{lake build}), the full pytest suite, and the property-based
+tests independently.
+
+% ============================================================================
+\section{Results}
+\label{sec:results}
+% ============================================================================
+
+\subsection{Phase 1: Automated Baseline}
+
+\Cref{tab:phase1} summarizes the results.
+
+\begin{table}[htbp]
+\centering
+\caption{Phase 1 results (mutmut, 420 mutants). Confidence intervals
+are Wilson score intervals~\cite{wilson1927probable}.}
+\label{tab:phase1}
+\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} & \textbf{95\% Wilson CI} \\
+\midrule
+Total mutants & 420 & \\
+Killed (incl.\ suspicious) & 232 & \\
+Survived & 188 & \\
+Raw mutation score & 55\% & [50\%, 60\%] \\
+Adjusted (excl.\ equiv/config/infra) & 79\% & [74\%, 84\%] \\
+\midrule
+Real gaps & 60 & \\
+Equivalent & 76 & \\
+Test infrastructure & 12 & \\
+Configuration & 40 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:byfile} breaks scores down by file. \texttt{state.py}
+scores highest (94\%), which is expected: it is the module most
+directly modeled by the Lean spec and thus best tested.
+\texttt{agents.py} scores lowest (45\%), reflecting the 21 real
+gaps in message construction and tool permission logic---behaviors
+entirely outside the formal model.
+
+\begin{table}[htbp]
+\centering
+\caption{Phase 1 scores by source file.}
+\label{tab:byfile}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{File} & \textbf{Total} & \textbf{Killed} & \textbf{Real gaps} & \textbf{Score} \\
+\midrule
+\texttt{state.py} & 48 & 45 & 2 & 94\% \\
+\texttt{graph.py} & 42 & 25 & 1 & 60\% \\
+\texttt{context.py} & 58 & 34 & 7 & 59\% \\
+\texttt{orchestrator.py} & 66 & 38 & 11 & 58\% \\
+\texttt{tools.py} & 55 & 30 & 11 & 55\% \\
+\texttt{budget.py} & 51 & 26 & 7 & 51\% \\
+\texttt{agents.py} & 76 & 34 & 21 & 45\% \\
+\texttt{\_types.py} & 24 & 0 & 0 & 0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Of 188 survivors, 15 were mapped to the Lean spec. Only 2 fall within
+spec scope; Lean catches 1 (mutant~\#69, an off-by-one in the budget
+comparison). The other (mutant~\#64, cost $+=$ replaced with $=$) passes
+the spec---see \Cref{sec:specguided} for the explanation. The remaining
+13 mapped survivors involve rate-level arithmetic, per-model tracking,
+loop convergence patterns, and checkpoint data structures that the
+Lean model abstracts away.
+
+\subsection{Phase 2: Multi-Method Comparison}
+
+\Cref{tab:phase2} shows detection rates across the 4 methods.
+
+\begin{table}[htbp]
+\centering
+\caption{Phase 2 detection rates (30 mutations, 4 methods).}
+\label{tab:phase2}
+\small
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+\textbf{Method} & \textbf{Detected} & \textbf{Rate} & \textbf{Unique} & \textbf{95\% CI} \\
+\midrule
+Unit tests & 14/30 & 47\% & 4 & [30\%, 64\%] \\
+Integration tests & 6/30 & 20\% & 0 & [10\%, 37\%] \\
+Property-based tests & 10/30 & 33\% & 3 & [19\%, 51\%] \\
+Lean~4 (all 30) & 8/30 & 27\% & 1 & [14\%, 44\%] \\
+Lean~4 (10 in scope) & 8/10 & 80\% & -- & [49\%, 94\%] \\
+\midrule
+Any method & 18/30 & 60\% & -- & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three results stand out. First, property-based testing provides
+3 unique detections---M07 (prompt rate used for both token types),
+M13 (cost divided by 100 instead of 1000, causing 10$\times$
+inflation), and M26 (returning \texttt{self} instead of a new copy
+from \texttt{record\_usage}). These involve numerical invariants
+that example-based tests do not exercise with the right input
+combinations.
+
+Second, Lean provides 1 unique detection: M10, where the budget
+check is weakened from \texttt{>} to \texttt{>=}. None of the
+65 tests construct a scenario where cost exactly equals the budget,
+so the off-by-one is invisible to testing.
+
+Third, 12 mutations survive all methods. Of these, 11 target
+behaviors outside the Lean spec (message construction, context
+truncation, tool execution paths, routing logic). The 12th (M06,
+swapping prompt and completion token counts) satisfies
+$\texttt{tTok} = \texttt{pTok} + \texttt{cTok}$ by commutativity
+of addition---a genuine spec weakness, since the identity holds
+regardless of which count is which.
+
+\Cref{tab:categories} gives per-category rates.
+
+\begin{table}[htbp]
+\centering
+\caption{Phase 2 detection by mutation category.}
+\label{tab:categories}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Category} & \textbf{n} & \textbf{Unit} & \textbf{Integ.} & \textbf{Prop.} & \textbf{Lean} \\
+\midrule
+Logic & 8 & 25\% & 12\% & 38\% & 12\% \\
+Boundary & 8 & 50\% & 25\% & 25\% & 38\% \\
+Missing check & 8 & 62\% & 12\% & 25\% & 25\% \\
+State & 6 & 50\% & 33\% & 50\% & 33\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phase 3: Spec-Guided Mutations}
+\label{sec:specguided}
+
+\Cref{tab:specguided} presents the 11 spec-guided mutations.
+
+\begin{table}[htbp]
+\centering
+\caption{Spec-guided mutation results. Each row negates one conjunct of \texttt{wf}.}
+\label{tab:specguided}
+\small
+\begin{tabular}{@{}llp{4.5cm}ccc@{}}
+\toprule
+\textbf{ID} & \textbf{Inv.} & \textbf{Description} & \textbf{Lean} & \textbf{Tests} & \textbf{Props} \\
+\midrule
+SGM-P1a & P1 & Drop completion tokens from total & \checkmark & \checkmark & \checkmark \\
+SGM-P1b & P1 & Double-count prompt tokens & \checkmark & \checkmark & \checkmark \\
+SGM-P2a & P2 & Invert budget check ($>$ to $<$) & \checkmark & \checkmark & \checkmark \\
+SGM-P2b & P2 & Weaken budget ($>$ to $\geq$) & \checkmark & $\times$ & $\times$ \\
+SGM-P2c & P2 & Replace $\mathrel{+}=$ with $=$ in cost & $\times$ & $\times$ & $\times$ \\
+SGM-P3a & P3 & Double checkpoint increment & \checkmark & \checkmark & \checkmark \\
+SGM-P3b & P3 & Spurious checkpoint at max-steps & \checkmark & \checkmark & $\times$ \\
+SGM-P4a & P4 & Double step increment & \checkmark & \checkmark & \checkmark \\
+SGM-P4b & P4 & Skip step increment & \checkmark & \checkmark & \checkmark \\
+SGM-P5a & P5 & Budget-exceeded with done=false & \checkmark & \checkmark & $\times$ \\
+SGM-P5b & P5 & Wrong termination reason & \checkmark & \checkmark & $\times$ \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{Detection rate}} & \textbf{90.9\%} & \textbf{81.8\%} & \textbf{54.5\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{SGM-P2b (Lean-only detection).}
+Weakening the budget check from \texttt{>} to \texttt{>=} is caught
+by the \texttt{continue\_adds\_ckpt} theorem in Lean, which requires
+that cost plus the new call's cost does \emph{not} exceed the budget
+for execution to continue. No test constructs a scenario where
+accumulated cost exactly equals the budget, so 0 of 65 tests detect
+this mutation. This is the same bug as Phase~2 mutation M10 and
+Phase~1 mutant~\#69, independently confirming the finding across all
+three study phases.
+
+\paragraph{SGM-P2c (the abstraction gap).}
+Replacing cost accumulation (\texttt{+=}) with simple assignment
+(\texttt{=}) in \texttt{total\_cost} passes both the Lean spec and all
+65 tests. The \texttt{wf} predicate checks
+$\texttt{cost} \leq \texttt{maxBudget}$ per step but has no
+cost-monotonicity invariant. Under natural number arithmetic,
+\[
+  c.\text{cost} \;\leq\; s.\text{cost} + c.\text{cost}
+  \;\leq\; \text{maxBudget},
+\]
+so dropping the accumulation still satisfies
+every theorem. This is a spec weakness: adding a sixth conjunct
+$\textit{new}.\texttt{cost} \geq \textit{old}.\texttt{cost}$
+to \texttt{wf} would catch it.
+The same bug appears independently as Phase~1 mutant~\#64.
+
+\subsection{Summary}
+
+\Cref{tab:combined} collects detection rates across phases.
+
+\begin{table}[htbp]
+\centering
+\caption{Detection rates across study phases.}
+\label{tab:combined}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Method} & \textbf{Phase 1} & \textbf{Phase 2} & \textbf{Phase 3} \\
+ & \textbf{(n=420)} & \textbf{(n=30)} & \textbf{(n=11)} \\
+\midrule
+Unit tests & \multirow{3}{*}{55\% raw / 79\% adj} & 47\% & -- \\
+Integration tests & & 20\% & -- \\
+Property-based tests & & 33\% & 54.5\% \\
+Lean~4 (in scope) & 50\% (n=2) & 80\% (n=10) & 90.9\% \\
+All tests combined & -- & -- & 81.8\% \\
+Any method & 55\% & 60\% & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{RQ1.}
+Formal verification and testing are complementary. Lean detects
+M10/SGM-P2b (off-by-one budget threshold) that no test catches.
+Property-based testing detects M07, M13, M26 that Lean cannot model.
+Within scope, Lean achieves 80--91\%; outside scope, it provides
+nothing. The union of all methods detects 60\% of Phase~2 mutations.
+
+\paragraph{RQ2.}
+The Lean specification covers 10 of 30 Phase~2 mutations (33\%)
+and 11 of 11 Phase~3 mutations by construction. Of 60 real-gap
+survivors in Phase~1, only 2 of 15 mapped mutants fall within spec
+scope. The other 87\% involve message construction, tool schemas,
+system prompts, context windowing, and routing---none of which the
+Lean model addresses.
+
+% ============================================================================
+\section{Cross-System Generalizability}
+\label{sec:crosssystem}
+% ============================================================================
+
+To test whether the gap taxonomy is specific to our harness, we
+analyzed the source code of smolagents~1.24.0 (6,384~LOC) and
+pydantic-ai~1.77.0 (9,064~LOC). We mapped their modules to the same
+7 architectural categories and counted code patterns associated with
+each gap category via regex, normalized per 100~LOC. This is a
+structural analysis only---we did not run mutation testing on the
+external frameworks' test suites.
+
+\begin{table}[htbp]
+\centering
+\caption{Pattern density (occurrences per 100~LOC) across frameworks.
+Measured by regex pattern matching; see \Cref{sec:threats}.}
+\label{tab:crosssystem}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Gap Category} & \textbf{excelsior} & \textbf{smolagents} & \textbf{pydantic-ai} & \textbf{All 3?} \\
+\midrule
+message\_construction & 3.4 & 1.6 & 4.1 & Yes \\
+tool\_schema\_gen & 3.2 & 2.3 & 5.3 & Yes \\
+system\_prompt & 1.4 & 1.7 & 2.9 & Yes \\
+token\_accounting & 5.5 & 0.6 & 0.6 & Yes \\
+context\_window & 2.7 & 0.3 & 0.3 & Yes \\
+loop\_termination & 1.5 & 1.1 & 0.4 & Yes \\
+checkpoint\_state & 1.5 & 0.3 & 0.1 & Yes \\
+retry\_error & 1.5 & 0.1 & 3.1 & Yes \\
+\midrule
+tool\_permission & 0.5 & 0.0 & 0.1 & Partial \\
+cost\_budget & 13.1 & 0.0 & 0.2 & Partial \\
+routing\_dispatch & 2.6 & 0.0 & 0.1 & Partial \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{RQ3.}
+8 of 11 gap categories appear in all three frameworks
+(\Cref{tab:crosssystem}). The 3 partial categories reflect
+architectural differences: smolagents has no built-in budget tracking
+(it delegates to external monitoring), and pydantic-ai uses implicit
+routing rather than an explicit graph. All three frameworks implement
+the state machine pattern that our 5 Lean invariants describe, with
+identifiable equivalents for each invariant (\Cref{tab:invariantmap}).
+
+\begin{table}[htbp]
+\centering
+\caption{Invariant equivalents across frameworks.}
+\label{tab:invariantmap}
+\footnotesize
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Inv.} & \textbf{excelsior} & \textbf{smolagents} & \textbf{pydantic-ai} \\
+\midrule
+P1 & state / record\_usage & monitoring / update\_metrics & usage / incr\_usage \\
+P2 & budget / BudgetExceeded & monitoring / Monitor & usage / UsageLimits \\
+P3 & state / checkpoint & agents / write\_memory & result / stream \\
+P4 & orchestrator / max\_steps & agents / max\_steps & agent\_graph / max\_result\_retries \\
+P5 & orchestrator / terminate & agents / final\_answer & agent\_graph / check\_for\_result \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section{Discussion}
+\label{sec:discussion}
+% ============================================================================
+
+\subsection{The Formal/Informal Boundary}
+
+The three phases converge on a consistent picture of what formal
+verification can and cannot do for LLM orchestration code:
+
+\begin{itemize}[nosep]
+  \item \textbf{Formal catches what testing misses}: Off-by-one
+    boundary conditions (SGM-P2b, M10) where triggering the bug
+    requires hitting an exact cost value. No amount of adding unit
+    tests will reliably cover this without boundary-value analysis.
+  \item \textbf{Testing catches what formal methods cannot reach}:
+    Message construction, schema generation, context truncation,
+    and routing logic are implementation concerns that the
+    mathematical model does not encode.
+  \item \textbf{Both miss the same bug}: SGM-P2c exposes a gap where
+    the specification and the test suite share a blind spot. The
+    Lean model checks cost bounds per-step but not cost monotonicity
+    across steps; the tests never accumulate enough cost across
+    multiple steps to notice the difference between $+=$ and $=$.
+\end{itemize}
+
+The third category is the most useful output of this study: it
+identifies a specification weakness that can be fixed by adding one
+conjunct to \texttt{wf}, and a testing weakness that can be fixed
+by adding a multi-step cost accumulation test.
+
+\subsection{Spec-Guided vs.\ Random Mutations}
+
+The 90.9\% Lean detection rate for spec-guided mutations is higher
+than the population baseline, as expected---these mutations target
+formally verified invariants by construction. The interesting
+mutations are the two that break this pattern:
+
+\begin{itemize}[nosep]
+  \item SGM-P2b ($>$ to $\geq$): Lean catches it, but so does
+    mutmut mutant~\#69 (Phase~1), confirming it is a real
+    population-level gap, not an artifact of our selection.
+  \item SGM-P2c ($+=$ to $=$): Neither Lean nor tests catch it.
+    Phase~1 mutant~\#64 independently confirms this gap.
+\end{itemize}
+
+The cross-phase confirmation matters: both gaps appear in both
+the random (Phase~1) and targeted (Phase~3) populations, ruling
+out cherry-picking.
+
+\subsection{Practical Implications}
+
+Based on the gap analysis, LLM orchestration frameworks would benefit
+from three additions to their test suites:
+
+\begin{enumerate}[nosep]
+  \item Property-based tests covering rate arithmetic (M07, M13)
+    and copy semantics (M26), where the bug manifests only under
+    specific numerical combinations.
+  \item Boundary-value tests that set cost exactly equal to the
+    budget limit, exercising the $>$ vs.\ $\geq$ edge.
+  \item At minimum, runtime assertions for state invariants
+    (e.g., asserting cost is non-decreasing after each budget
+    recording). Even without a theorem prover, this would have
+    caught SGM-P2c.
+\end{enumerate}
+
+% ============================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+% ============================================================================
+
+\paragraph{Internal validity.}
+Survivor classification in Phase~1 uses rule-based heuristics,
+not manual inspection of all 188 survivors. We default to ``real
+gap'' for unclassified core-module mutations and report both raw
+and adjusted scores. The Lean mapping covers only 15 of 188
+survivors; more survivors in \texttt{agents.py}, \texttt{tools.py},
+and \texttt{context.py} are unmapped because the spec does not model
+those modules.
+
+\paragraph{External validity.}
+The harness was built for this study, not extracted from production.
+The cross-system analysis (\Cref{sec:crosssystem}) partially
+addresses this by showing structural similarity to production
+frameworks, but we did not run mutation testing on their test suites.
+Pattern counting via regex is a rough proxy for architectural
+concerns; false positives are possible.
+
+\paragraph{Construct validity.}
+The equivalent mutant problem~\cite{papadakis2019mutation} affects
+all mutation studies. Some mutations we classify as equivalent may be
+real bugs, and vice versa. 17 of 30 Phase~2 mutations have no
+Phase~1 counterpart, which limits our ability to verify that Phase~2
+is fully representative.
+
+% ============================================================================
+\section{Related Work}
+\label{sec:related}
+% ============================================================================
+
+\paragraph{Mutation testing.}
+Mutation testing was introduced by DeMillo et
+al.~\cite{demillo1978hints} and surveyed comprehensively by Jia and
+Harman~\cite{jia2011analysis} and Papadakis et
+al.~\cite{papadakis2019mutation}. Gopinath et
+al.~\cite{gopinath2014mutations} study the difficulty of achieving
+high mutation scores; Petrovi\'c and
+Ivankovi\'c~\cite{petrovic2018state} report on mutation testing at
+Google scale. Our work applies mutation testing to a new domain
+(LLM orchestration) and combines it with formal verification to
+measure method complementarity.
+
+\paragraph{Formal verification of systems software.}
+CompCert~\cite{leroy2009compcert} verified a C compiler;
+seL4~\cite{klein2009sel4} verified an OS microkernel. Both
+demonstrated that formal verification scales to real systems
+with thousands of lines of proof. Our Lean~4 specification is
+smaller (319~LOC, 15 theorems) but targets a domain where formal
+methods have not been applied before.
+
+\paragraph{Property-based testing.}
+\begin{sloppypar}
+QuickCheck~\cite{claessen2000quickcheck} pioneered random property-based
+testing for Haskell; Hypothesis~\cite{hypothesis2024} brought it to
+Python. Our study quantifies their overlap with formal verification:
+they share most detections but each finds bugs the other misses---3
+unique to property-based tests, 1 unique to Lean.
+\end{sloppypar}
+
+\paragraph{LLM agent frameworks.}
+LangGraph~\cite{langgraph2024}, CrewAI~\cite{crewai2024},
+AutoGen~\cite{autogen2024}, smolagents~\cite{smolagents2024}, and
+pydantic-ai~\cite{pydanticai2024} are production frameworks for
+multi-agent orchestration. None provides formal specifications.
+To our knowledge, this is the first application of theorem proving
+to LLM orchestration code.
+
+% ============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ============================================================================
+
+We reported a three-phase mutation study on an LLM orchestration
+harness with a Lean~4 specification. The main findings:
+formal verification detects 80--91\% of mutations within its
+scope, but that scope covers only 13--33\% of the mutation surface;
+property-based testing and formal verification are complementary,
+each catching bugs the other misses; and spec-guided mutation
+generation exposed a concrete specification gap (missing
+cost-monotonicity invariant) that neither the formal spec nor the
+test suite detected.
+
+The gap taxonomy (8 of 11 categories universal across three
+frameworks) suggests these findings are not artifacts of our
+specific implementation. The Lean specification and all study
+artifacts are available at
+\url{https://github.com/[redacted]/excelsior-harness}.
+
+% ============================================================================
+% Data Availability
+% ============================================================================
+\paragraph{Data availability.}
+Source code, Lean~4 specifications, mutation scripts, raw results
+(JSON), and the mutmut cache are included in the repository under
+\texttt{studies/mutation\_testing/} and \texttt{formal/}.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,10 @@
+name = "Lean4Learn"
+version = "0.1.0"
+defaultTargets = ["lean4learn"]
+
+[[lean_lib]]
+name = "Lean4Learn"
+
+[[lean_exe]]
+name = "lean4learn"
+root = "Main"

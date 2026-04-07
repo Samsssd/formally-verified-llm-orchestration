@@ -1,0 +1,932 @@
+{
+  "metadata": {
+    "timestamp": "2026-04-04T15:52:48",
+    "n_mutations": 30,
+    "lean_skipped": false,
+    "llm_skipped": true,
+    "llm_provider": null,
+    "llm_model": null
+  },
+  "results": [
+    {
+      "id": "M01",
+      "category": "logic",
+      "description": "record_usage drops completion_tokens from total",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_state.py::TestAgentState::test_record_usage - AssertionErro...; FAILED tests/test_state.py::TestAgentState::test_record_usage_accumulates - A...",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_token_accounting_single - Assertio...; FAILED tests/test_properties.py::test_prop_token_accounting_multi - Assertion...",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (8 errors) | error: build failed",
+      "lean_broken_theorems": "step_preserves_tokens, step_preserves_wf",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M02",
+      "category": "logic",
+      "description": "Budget record subtracts cost instead of adding",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_budget.py::TestBudgetTracker::test_record_cost - AssertionE...; FAILED tests/test_budget.py::TestBudgetTracker::test_budget_exceeded_raises; FAILED tests/test_budget.py::TestBudgetTracker::test_summary - assert -0.0284...; FAILED tests/test_orchestrator.py::TestHarness::test_budget_termination - Ass...",
+      "integ_catches": true,
+      "integ_detail": "FAILED tests/test_integration.py::test_multi_agent_research_flow - assert -0....",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_budget_cost_non_negative - Asserti...; FAILED tests/test_properties.py::test_prop_budget_cost_monotonic - AssertionE...",
+      "lean_applicable": true,
+      "lean_catches": false,
+      "lean_detail": "BUILD PASSES: mutation satisfies existing spec (Nat can't go negative; closest equivalent is cost stays constant)",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M03",
+      "category": "logic",
+      "description": "Supervisor route case-sensitive (misses lowercase)",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec uses abstract Route type, not string parsing",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M04",
+      "category": "logic",
+      "description": "Graph resolves LAST edge instead of first",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec takes Route as parameter, doesn't model graph traversal",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M05",
+      "category": "logic",
+      "description": "Token counter uses 3 instead of 4 for overhead",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec uses abstract token counts, not tiktoken encoding",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M06",
+      "category": "logic",
+      "description": "BaseAgent swaps prompt and completion token counts",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": true,
+      "lean_catches": false,
+      "lean_detail": "BUILD PASSES: mutation satisfies existing spec (Direct: swap which call result field goes to which state field)",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M07",
+      "category": "logic",
+      "description": "Budget uses prompt_rate for both prompt and completion",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_cost_matches_rate_table - Assertio...",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec uses abstract cost, not rate * token_count",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M08",
+      "category": "logic",
+      "description": "Orchestrator computes token delta from wrong base",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec tracks absolute tokens, not per-step deltas",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M09",
+      "category": "boundary",
+      "description": "Off-by-one: > instead of >= (allows extra step)",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_orchestrator.py::TestHarness::test_max_steps_termination - ...; FAILED tests/test_orchestrator.py::TestHarness::test_checkpoints_created - As...",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (5 errors) | error: build failed",
+      "lean_broken_theorems": "continue_adds_ckpt, max_steps_no_ckpt, step_done_at_max",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M10",
+      "category": "boundary",
+      "description": "Budget >= instead of > (triggers one call early)",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (3 errors) | error: build failed",
+      "lean_broken_theorems": "continue_adds_ckpt",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M11",
+      "category": "boundary",
+      "description": "Context keeps keep_recent-1 messages",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_context.py::TestContextManager::test_truncation_preserves_system_and_recent",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec doesn't model context window message management",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M12",
+      "category": "boundary",
+      "description": "Context < instead of <= (unnecessary truncation)",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec doesn't model context truncation logic",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M13",
+      "category": "boundary",
+      "description": "Budget /100 instead of /1000 (10x inflation)",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_cost_matches_rate_table - Assertio...",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec uses abstract cost units, not token/1000 * rate",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M14",
+      "category": "boundary",
+      "description": "record_usage doesn't increment step_count",
+      "unit_catches": true,
+      "unit_detail": "TIMEOUT (infinite loop detected)",
+      "integ_catches": true,
+      "integ_detail": "FAILED tests/test_integration.py::test_multi_agent_research_flow - AssertionE...",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_step_increment - AssertionError: a...; FAILED tests/test_properties.py::test_prop_step_equals_call_count - Assertion...",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (5 errors) | error: build failed",
+      "lean_broken_theorems": "step_inc_or_done, step_preserves_wf",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M15",
+      "category": "boundary",
+      "description": "MockLLMClient uses max instead of min",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_agents.py::TestMockLLMClient::test_returns_queued_responses; FAILED tests/test_agents.py::TestMockLLMClient::test_cycles_when_exhausted - ...; FAILED tests/test_orchestrator.py::TestHarness::test_tool_execution_in_loop",
+      "integ_catches": true,
+      "integ_detail": "FAILED tests/test_integration.py::test_multi_agent_research_flow - AssertionE...",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec uses abstract call/route functions, not response arrays",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M16",
+      "category": "boundary",
+      "description": "Message restoration off-by-one in slice",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec doesn't model message restoration after truncation",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M17",
+      "category": "missing_check",
+      "description": "safe_execute skips registry lookup",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Tool isolation proved separately via toolPermitted predicate",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M18",
+      "category": "missing_check",
+      "description": "Budget record removes exceeded check",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_budget.py::TestBudgetTracker::test_budget_exceeded_raises; FAILED tests/test_orchestrator.py::TestHarness::test_budget_termination - Ass...",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_budget_enforcement - AssertionErro...; FAILED tests/test_properties.py::test_prop_budget_always_catches_large_cost",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (5 errors) | error: build failed",
+      "lean_broken_theorems": "continue_adds_ckpt, step_preserves_wf",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M19",
+      "category": "missing_check",
+      "description": "Graph validate skips entry point check",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_graph.py::TestStateGraph::test_validate_missing_entry_point",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec takes Route as parameter, doesn't model graph integrity",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M20",
+      "category": "missing_check",
+      "description": "terminate() doesn't set terminated=True",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_state.py::TestAgentState::test_terminate - AssertionError: ...; FAILED tests/test_orchestrator.py::TestHarness::test_max_steps_termination - ...; FAILED tests/test_orchestrator.py::TestHarness::test_budget_termination - Ass...",
+      "integ_catches": true,
+      "integ_detail": "FAILED tests/test_integration.py::test_multi_agent_research_flow - AssertionE...",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_terminate_sets_flag - AssertionErr...; FAILED tests/test_properties.py::test_prop_terminate_immutable - AssertionErr...",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (4 errors) | error: build failed",
+      "lean_broken_theorems": "step_inc_or_done, step_preserves_wf",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M21",
+      "category": "missing_check",
+      "description": "Orchestrator skips context truncation",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec models step/budget/token accounting, not context window",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M22",
+      "category": "missing_check",
+      "description": "BaseAgent doesn't filter by allowed_tools",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Tool isolation proved via separate toolPermitted predicate",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M23",
+      "category": "missing_check",
+      "description": "add_edge removes target existence check",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_graph.py::TestStateGraph::test_validate_edge_references_unknown_node",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec doesn't model graph construction",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M24",
+      "category": "missing_check",
+      "description": "safe_execute doesn't catch exceptions",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_tools.py::TestSafeExecute::test_execution_with_error - Valu...",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec models deterministic state transitions, not error paths",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M25",
+      "category": "state",
+      "description": "add_message mutates in-place instead of copy",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_state.py::TestAgentState::test_add_message_returns_new_state; FAILED tests/test_orchestrator.py::TestHarness::test_tool_execution_in_loop",
+      "integ_catches": true,
+      "integ_detail": "FAILED tests/test_integration.py::test_multi_agent_research_flow - assert 0 >= 2",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_add_message_immutable - AssertionE...",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean is purely functional; in-place mutation doesn't exist",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M26",
+      "category": "state",
+      "description": "record_usage returns self instead of new copy",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_record_usage_immutable - Assertion...",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean functions always return new values; mutation is impossible",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M27",
+      "category": "state",
+      "description": "Orchestrator skips checkpoint after routing",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_orchestrator.py::TestHarness::test_checkpoints_created - As...",
+      "integ_catches": true,
+      "integ_detail": "FAILED tests/test_integration.py::test_multi_agent_research_flow - AssertionE...",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (3 errors) | error: build failed",
+      "lean_broken_theorems": "continue_adds_ckpt",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M28",
+      "category": "state",
+      "description": "checkpoint overwrites instead of appending",
+      "unit_catches": true,
+      "unit_detail": "FAILED tests/test_orchestrator.py::TestHarness::test_checkpoints_created - As...",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": true,
+      "prop_detail": "FAILED tests/test_properties.py::test_prop_checkpoint_accumulates - Assertion...; FAILED tests/test_properties.py::test_prop_checkpoint_history_preserved - Ass...",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (3 errors) | error: build failed",
+      "lean_broken_theorems": "continue_adds_ckpt",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M29",
+      "category": "state",
+      "description": "Orchestrator records budget cost twice",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec uses abstract cost; doubling changes magnitude but not invariant structure",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    },
+    {
+      "id": "M30",
+      "category": "state",
+      "description": "WorkerAgent doesn't restore original system_prompt",
+      "unit_catches": false,
+      "unit_detail": "all passed",
+      "integ_catches": false,
+      "integ_detail": "all passed",
+      "prop_catches": false,
+      "prop_detail": "all passed",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Spec doesn't model system prompt content, only state transitions",
+      "lean_broken_theorems": "",
+      "llm_catches": false,
+      "llm_detail": "SKIPPED",
+      "llm_severity": "",
+      "llm_raw": ""
+    }
+  ],
+  "statistics": {
+    "n": 30,
+    "methods": {
+      "unit": {
+        "caught": 14,
+        "rate": 0.4666666666666667,
+        "ci_lo": 0.302,
+        "ci_hi": 0.639,
+        "unique": 4
+      },
+      "integ": {
+        "caught": 6,
+        "rate": 0.2,
+        "ci_lo": 0.095,
+        "ci_hi": 0.373,
+        "unique": 0
+      },
+      "prop": {
+        "caught": 10,
+        "rate": 0.3333333333333333,
+        "ci_lo": 0.192,
+        "ci_hi": 0.512,
+        "unique": 3
+      },
+      "lean": {
+        "caught": 8,
+        "rate": 0.26666666666666666,
+        "ci_lo": 0.142,
+        "ci_hi": 0.444,
+        "unique": 1
+      },
+      "llm": {
+        "caught": 0,
+        "rate": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.114,
+        "unique": 0
+      }
+    },
+    "categories": {
+      "logic": {
+        "n": 8,
+        "unit": {
+          "caught": 2,
+          "rate": 0.25
+        },
+        "integ": {
+          "caught": 1,
+          "rate": 0.125
+        },
+        "prop": {
+          "caught": 3,
+          "rate": 0.375
+        },
+        "lean": {
+          "caught": 1,
+          "rate": 0.125
+        },
+        "llm": {
+          "caught": 0,
+          "rate": 0.0
+        }
+      },
+      "boundary": {
+        "n": 8,
+        "unit": {
+          "caught": 4,
+          "rate": 0.5
+        },
+        "integ": {
+          "caught": 2,
+          "rate": 0.25
+        },
+        "prop": {
+          "caught": 2,
+          "rate": 0.25
+        },
+        "lean": {
+          "caught": 3,
+          "rate": 0.375
+        },
+        "llm": {
+          "caught": 0,
+          "rate": 0.0
+        }
+      },
+      "missing_check": {
+        "n": 8,
+        "unit": {
+          "caught": 5,
+          "rate": 0.625
+        },
+        "integ": {
+          "caught": 1,
+          "rate": 0.125
+        },
+        "prop": {
+          "caught": 2,
+          "rate": 0.25
+        },
+        "lean": {
+          "caught": 2,
+          "rate": 0.25
+        },
+        "llm": {
+          "caught": 0,
+          "rate": 0.0
+        }
+      },
+      "state": {
+        "n": 6,
+        "unit": {
+          "caught": 3,
+          "rate": 0.5
+        },
+        "integ": {
+          "caught": 2,
+          "rate": 0.333
+        },
+        "prop": {
+          "caught": 3,
+          "rate": 0.5
+        },
+        "lean": {
+          "caught": 2,
+          "rate": 0.333
+        },
+        "llm": {
+          "caught": 0,
+          "rate": 0.0
+        }
+      }
+    },
+    "pairwise": {
+      "unit_vs_integ": {
+        "both": 6,
+        "only_first": 8,
+        "only_second": 0,
+        "neither": 16,
+        "fisher_p": 0.0051,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.444,
+        "phi_coefficient": 0.535
+      },
+      "unit_vs_prop": {
+        "both": 7,
+        "only_first": 7,
+        "only_second": 3,
+        "neither": 13,
+        "fisher_p": 0.1216,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.318,
+        "phi_coefficient": 0.331
+      },
+      "unit_vs_lean": {
+        "both": 7,
+        "only_first": 7,
+        "only_second": 1,
+        "neither": 15,
+        "fisher_p": 0.0121,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.45,
+        "phi_coefficient": 0.494
+      },
+      "unit_vs_llm": {
+        "both": 0,
+        "only_first": 14,
+        "only_second": 0,
+        "neither": 16,
+        "fisher_p": 1.0,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.0,
+        "phi_coefficient": 0.0
+      },
+      "integ_vs_prop": {
+        "both": 4,
+        "only_first": 2,
+        "only_second": 6,
+        "neither": 18,
+        "fisher_p": 0.1413,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.333,
+        "phi_coefficient": 0.354
+      },
+      "integ_vs_lean": {
+        "both": 3,
+        "only_first": 3,
+        "only_second": 5,
+        "neither": 19,
+        "fisher_p": 0.3003,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.259,
+        "phi_coefficient": 0.264
+      },
+      "integ_vs_llm": {
+        "both": 0,
+        "only_first": 6,
+        "only_second": 0,
+        "neither": 24,
+        "fisher_p": 1.0,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.0,
+        "phi_coefficient": 0.0
+      },
+      "prop_vs_lean": {
+        "both": 5,
+        "only_first": 5,
+        "only_second": 3,
+        "neither": 17,
+        "fisher_p": 0.0778,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.368,
+        "phi_coefficient": 0.373
+      },
+      "prop_vs_llm": {
+        "both": 0,
+        "only_first": 10,
+        "only_second": 0,
+        "neither": 20,
+        "fisher_p": 1.0,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.0,
+        "phi_coefficient": 0.0
+      },
+      "lean_vs_llm": {
+        "both": 0,
+        "only_first": 8,
+        "only_second": 0,
+        "neither": 22,
+        "fisher_p": 1.0,
+        "significant_bonferroni": false,
+        "cohens_kappa": 0.0,
+        "phi_coefficient": 0.0
+      }
+    },
+    "combined": {
+      "any_method": 18,
+      "any_rate": 0.6,
+      "testing_only": 10,
+      "lean_adds_over_testing": 1,
+      "llm_adds_over_all": 0,
+      "undetected": 12
+    },
+    "lean_applicable": {
+      "n_applicable": 10,
+      "caught_of_applicable": 8,
+      "rate_of_applicable": 0.8,
+      "ci_lo": 0.49,
+      "ci_hi": 0.943
+    },
+    "equivalent_mutants": {
+      "count": 12,
+      "spec_gap": 11,
+      "weak_invariant": 1,
+      "details": [
+        {
+          "id": "M03",
+          "category": "logic",
+          "description": "Supervisor route case-sensitive (misses lowercase)",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M04",
+          "category": "logic",
+          "description": "Graph resolves LAST edge instead of first",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M05",
+          "category": "logic",
+          "description": "Token counter uses 3 instead of 4 for overhead",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M06",
+          "category": "logic",
+          "description": "BaseAgent swaps prompt and completion token counts",
+          "lean_applicable": true,
+          "classification": "weak_invariant"
+        },
+        {
+          "id": "M08",
+          "category": "logic",
+          "description": "Orchestrator computes token delta from wrong base",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M12",
+          "category": "boundary",
+          "description": "Context < instead of <= (unnecessary truncation)",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M16",
+          "category": "boundary",
+          "description": "Message restoration off-by-one in slice",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M17",
+          "category": "missing_check",
+          "description": "safe_execute skips registry lookup",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M21",
+          "category": "missing_check",
+          "description": "Orchestrator skips context truncation",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M22",
+          "category": "missing_check",
+          "description": "BaseAgent doesn't filter by allowed_tools",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M29",
+          "category": "state",
+          "description": "Orchestrator records budget cost twice",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        },
+        {
+          "id": "M30",
+          "category": "state",
+          "description": "WorkerAgent doesn't restore original system_prompt",
+          "lean_applicable": false,
+          "classification": "spec_gap"
+        }
+      ]
+    },
+    "bonferroni_alpha": 0.005,
+    "mutation_score": {
+      "killed": 18,
+      "survived": 0,
+      "possibly_equivalent": 12,
+      "score": 1.0,
+      "score_conservative": 0.6
+    }
+  }
+}

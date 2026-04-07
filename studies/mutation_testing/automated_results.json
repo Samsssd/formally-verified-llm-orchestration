@@ -1,0 +1,781 @@
+{
+  "metadata": {
+    "timestamp": "2026-04-04T17:04:54",
+    "tool": "mutmut 2.5.1",
+    "test_suite": "pytest (unit + integration + property-based)"
+  },
+  "statistics": {
+    "total_mutants": 420,
+    "killed": 224,
+    "survived": 188,
+    "suspicious": 8,
+    "mutation_score_raw": 0.552,
+    "classification": {
+      "equivalent": 76,
+      "test_infra": 12,
+      "config": 40,
+      "real_gap": 60
+    },
+    "mutation_score_adjusted": 0.795,
+    "non_equivalent_total": 292,
+    "lean_analysis": {
+      "survivors_with_mapping": 15,
+      "lean_applicable": 2,
+      "lean_caught": 1,
+      "lean_na": 13
+    },
+    "by_file": {
+      "_types.py": {
+        "total": 24,
+        "killed": 0,
+        "survived": 24,
+        "real_gap": 0,
+        "equivalent": 24,
+        "config": 0,
+        "test_infra": 0
+      },
+      "budget.py": {
+        "total": 51,
+        "killed": 26,
+        "survived": 25,
+        "real_gap": 7,
+        "equivalent": 2,
+        "config": 16,
+        "test_infra": 0
+      },
+      "tools.py": {
+        "total": 55,
+        "killed": 30,
+        "survived": 25,
+        "real_gap": 11,
+        "equivalent": 6,
+        "config": 8,
+        "test_infra": 0
+      },
+      "graph.py": {
+        "total": 42,
+        "killed": 25,
+        "survived": 17,
+        "real_gap": 1,
+        "equivalent": 16,
+        "config": 0,
+        "test_infra": 0
+      },
+      "agents.py": {
+        "total": 76,
+        "killed": 34,
+        "survived": 42,
+        "real_gap": 21,
+        "equivalent": 3,
+        "config": 6,
+        "test_infra": 12
+      },
+      "context.py": {
+        "total": 58,
+        "killed": 34,
+        "survived": 24,
+        "real_gap": 7,
+        "equivalent": 15,
+        "config": 2,
+        "test_infra": 0
+      },
+      "orchestrator.py": {
+        "total": 66,
+        "killed": 38,
+        "survived": 28,
+        "real_gap": 11,
+        "equivalent": 9,
+        "config": 8,
+        "test_infra": 0
+      },
+      "state.py": {
+        "total": 48,
+        "killed": 45,
+        "survived": 3,
+        "real_gap": 2,
+        "equivalent": 1,
+        "config": 0,
+        "test_infra": 0
+      }
+    }
+  },
+  "real_gaps": [
+    {
+      "id": 57,
+      "file": "budget.py",
+      "line": 52,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -50,7 +50,7 @@\n         prompt_rate, completion_rate = COST_TABLE.get(\n             model, COST_TABLE[\"_default\"]\n         )\n-        cost = (prompt_tokens / 1000) * prompt_rate + (\n+        cost = (prompt_tokens / 1001) * pr",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean uses abstract Nat cost; /1001 vs /1000 is rate-level detail"
+    },
+    {
+      "id": 61,
+      "file": "budget.py",
+      "line": 53,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -51,7 +51,7 @@\n             model, COST_TABLE[\"_default\"]\n         )\n         cost = (prompt_tokens / 1000) * prompt_rate + (\n-            completion_tokens / 1000\n+            completion_tokens / 1001\n         ) * completion",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean uses abstract Nat cost; /1001 vs /1000 is rate-level detail"
+    },
+    {
+      "id": 64,
+      "file": "budget.py",
+      "line": 56,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -54,7 +54,7 @@\n             completion_tokens / 1000\n         ) * completion_rate\n \n-        self.total_cost += cost\n+        self.total_cost = cost\n         self._by_model[model] = self._by_model.get(model, 0.0) + cost\n \n   ",
+      "lean_applicable": true,
+      "lean_catches": false,
+      "lean_detail": "BUILD PASSES: Cost assignment instead of accumulation (spec lacks cost-monotonicity)"
+    },
+    {
+      "id": 66,
+      "file": "budget.py",
+      "line": 57,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -55,7 +55,7 @@\n         ) * completion_rate\n \n         self.total_cost += cost\n-        self._by_model[model] = self._by_model.get(model, 0.0) + cost\n+        self._by_model[model] = self._by_model.get(model, 1.0) + cost\n \n  ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Per-model cost tracking not modeled in spec"
+    },
+    {
+      "id": 67,
+      "file": "budget.py",
+      "line": 57,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -55,7 +55,7 @@\n         ) * completion_rate\n \n         self.total_cost += cost\n-        self._by_model[model] = self._by_model.get(model, 0.0) + cost\n+        self._by_model[model] = self._by_model.get(model, 0.0) - cost\n \n  ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Per-model cost tracking not modeled in spec"
+    },
+    {
+      "id": 68,
+      "file": "budget.py",
+      "line": 57,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -55,7 +55,7 @@\n         ) * completion_rate\n \n         self.total_cost += cost\n-        self._by_model[model] = self._by_model.get(model, 0.0) + cost\n+        self._by_model[model] = None\n \n         if self.total_cost > self.",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Per-model cost tracking not modeled in spec"
+    },
+    {
+      "id": 69,
+      "file": "budget.py",
+      "line": 59,
+      "reason": "Arithmetic/comparison operator mutation",
+      "diff": "--- src/excelsior_harness/budget.py\n+++ src/excelsior_harness/budget.py\n@@ -57,7 +57,7 @@\n         self.total_cost += cost\n         self._by_model[model] = self._by_model.get(model, 0.0) + cost\n \n-        if self.total_cost > self.max_budget_usd:\n+        if self.total_cost >= self.max_budget_usd:\n ",
+      "lean_applicable": true,
+      "lean_catches": true,
+      "lean_detail": "BUILD FAILS (3 errors): Budget threshold off-by-one (>= vs >)"
+    },
+    {
+      "id": 90,
+      "file": "tools.py",
+      "line": 47,
+      "reason": "Schema generation logic",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -45,7 +45,7 @@\n     required: list[str] = []\n \n     for param_name, param in sig.parameters.items():\n-        if param_name == \"return\":\n+        if param_name == \"XXreturnXX\":\n             continue\n         hint = hints.get(pa",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 91,
+      "file": "tools.py",
+      "line": 48,
+      "reason": "Continue removal -- loop control flow",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -46,7 +46,7 @@\n \n     for param_name, param in sig.parameters.items():\n         if param_name == \"return\":\n-            continue\n+            break\n         hint = hints.get(param_name, str)\n         json_type = _TYPE_MAP.get(h",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 92,
+      "file": "tools.py",
+      "line": 49,
+      "reason": "Schema generation logic",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -47,7 +47,7 @@\n     for param_name, param in sig.parameters.items():\n         if param_name == \"return\":\n             continue\n-        hint = hints.get(param_name, str)\n+        hint = None\n         json_type = _TYPE_MAP.get(h",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 93,
+      "file": "tools.py",
+      "line": 50,
+      "reason": "Schema generation logic",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -48,7 +48,7 @@\n         if param_name == \"return\":\n             continue\n         hint = hints.get(param_name, str)\n-        json_type = _TYPE_MAP.get(hint, \"string\")\n+        json_type = _TYPE_MAP.get(hint, \"XXstringXX\")\n     ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 94,
+      "file": "tools.py",
+      "line": 50,
+      "reason": "Schema generation logic",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -48,7 +48,7 @@\n         if param_name == \"return\":\n             continue\n         hint = hints.get(param_name, str)\n-        json_type = _TYPE_MAP.get(hint, \"string\")\n+        json_type = None\n         properties[param_name] = ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 95,
+      "file": "tools.py",
+      "line": 51,
+      "reason": "Tool schema structure mutation",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -49,7 +49,7 @@\n             continue\n         hint = hints.get(param_name, str)\n         json_type = _TYPE_MAP.get(hint, \"string\")\n-        properties[param_name] = {\"type\": json_type}\n+        properties[param_name] = {\"XXtype",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 96,
+      "file": "tools.py",
+      "line": 51,
+      "reason": "Tool schema structure mutation",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -49,7 +49,7 @@\n             continue\n         hint = hints.get(param_name, str)\n         json_type = _TYPE_MAP.get(hint, \"string\")\n-        properties[param_name] = {\"type\": json_type}\n+        properties[param_name] = None\n   ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 97,
+      "file": "tools.py",
+      "line": 52,
+      "reason": "Schema generation logic",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -50,7 +50,7 @@\n         hint = hints.get(param_name, str)\n         json_type = _TYPE_MAP.get(hint, \"string\")\n         properties[param_name] = {\"type\": json_type}\n-        if param.default is inspect.Parameter.empty:\n+        i",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 101,
+      "file": "tools.py",
+      "line": 58,
+      "reason": "Tool schema structure mutation",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -56,7 +56,7 @@\n     return {\n         \"type\": \"object\",\n         \"properties\": properties,\n-        \"required\": required,\n+        \"XXrequiredXX\": required,\n     }",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 118,
+      "file": "tools.py",
+      "line": 113,
+      "reason": "Tool schema structure mutation",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -111,7 +111,7 @@\n                 \"type\": \"function\",\n                 \"function\": {\n                     \"name\": defn.name,\n-                    \"description\": defn.description,\n+                    \"XXdescriptionXX\": defn.des",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 130,
+      "file": "tools.py",
+      "line": 136,
+      "reason": "Tool registration alias",
+      "diff": "--- src/excelsior_harness/tools.py\n+++ src/excelsior_harness/tools.py\n@@ -134,5 +134,5 @@\n \n \n # Convenience alias\n-tool = ToolRegistry.register\n+tool = None",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 160,
+      "file": "graph.py",
+      "line": 88,
+      "reason": "Graph resolution logic",
+      "diff": "--- src/excelsior_harness/graph.py\n+++ src/excelsior_harness/graph.py\n@@ -86,7 +86,7 @@\n         edges = self._edges.get(current, [])\n \n         if not edges:\n-            if current in self._finish_points:\n+            if current not in self._finish_points:\n                 return None\n            ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 201,
+      "file": "agents.py",
+      "line": 80,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -78,7 +78,7 @@\n         self, state: AgentState, tool_registry: ToolRegistry\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Execute one LLM call and return updated state + step type.\"\"\"\n-        messages = [{\"role\": \"syst",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 202,
+      "file": "agents.py",
+      "line": 80,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -78,7 +78,7 @@\n         self, state: AgentState, tool_registry: ToolRegistry\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Execute one LLM call and return updated state + step type.\"\"\"\n-        messages = [{\"role\": \"syst",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 203,
+      "file": "agents.py",
+      "line": 80,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -78,7 +78,7 @@\n         self, state: AgentState, tool_registry: ToolRegistry\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Execute one LLM call and return updated state + step type.\"\"\"\n-        messages = [{\"role\": \"syst",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 205,
+      "file": "agents.py",
+      "line": 80,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -78,7 +78,7 @@\n         self, state: AgentState, tool_registry: ToolRegistry\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Execute one LLM call and return updated state + step type.\"\"\"\n-        messages = [{\"role\": \"syst",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 206,
+      "file": "agents.py",
+      "line": 82,
+      "reason": "Tool permission filtering",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -80,7 +80,7 @@\n         \"\"\"Execute one LLM call and return updated state + step type.\"\"\"\n         messages = [{\"role\": \"system\", \"content\": self.system_prompt}] + state.messages\n \n-        all_schemas = tool_registry.to_opena",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 207,
+      "file": "agents.py",
+      "line": 84,
+      "reason": "Tool permission filtering",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -82,7 +82,7 @@\n \n         all_schemas = tool_registry.to_openai_schema()\n         agent_tools = (\n-            [s for s in all_schemas if s[\"function\"][\"name\"] in self.allowed_tools]\n+            [s for s in all_schemas if s[",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 208,
+      "file": "agents.py",
+      "line": 84,
+      "reason": "Tool permission filtering",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -82,7 +82,7 @@\n \n         all_schemas = tool_registry.to_openai_schema()\n         agent_tools = (\n-            [s for s in all_schemas if s[\"function\"][\"name\"] in self.allowed_tools]\n+            [s for s in all_schemas if s[",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 209,
+      "file": "agents.py",
+      "line": 84,
+      "reason": "Tool permission filtering",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -82,7 +82,7 @@\n \n         all_schemas = tool_registry.to_openai_schema()\n         agent_tools = (\n-            [s for s in all_schemas if s[\"function\"][\"name\"] in self.allowed_tools]\n+            [s for s in all_schemas if s[",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 210,
+      "file": "agents.py",
+      "line": 87,
+      "reason": "Unclassified auxiliary-module mutation",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -81,11 +81,7 @@\n         messages = [{\"role\": \"system\", \"content\": self.system_prompt}] + state.messages\n \n         all_schemas = tool_registry.to_openai_schema()\n-        agent_tools = (\n-            [s for s in all_schemas ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 213,
+      "file": "agents.py",
+      "line": 94,
+      "reason": "Agent response handling",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -92,7 +92,7 @@\n         if response.tool_calls:\n             step_type = StepType.TOOL_CALL\n             new_state = state.add_message(\n-                \"assistant\", response.content, tool_calls=response.tool_calls\n+         ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 218,
+      "file": "agents.py",
+      "line": 103,
+      "reason": "Token/cost recording",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -101,7 +101,7 @@\n         new_state = new_state.record_usage(\n             prompt_tokens=response.prompt_tokens,\n             completion_tokens=response.completion_tokens,\n-            cost=0.0,\n+            cost=1.0,\n       ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 224,
+      "file": "agents.py",
+      "line": 126,
+      "reason": "System prompt injection",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -124,7 +124,7 @@\n         self, state: AgentState, tool_registry: ToolRegistry\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Step with task context injected into system prompt.\"\"\"\n-        original_prompt = self.system_p",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 225,
+      "file": "agents.py",
+      "line": 127,
+      "reason": "System prompt injection",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -125,7 +125,7 @@\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Step with task context injected into system prompt.\"\"\"\n         original_prompt = self.system_prompt\n-        self.system_prompt = f\"{original_prompt}\\n\\nYou",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 226,
+      "file": "agents.py",
+      "line": 127,
+      "reason": "System prompt injection",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -125,7 +125,7 @@\n     ) -> tuple[AgentState, StepType]:\n         \"\"\"Step with task context injected into system prompt.\"\"\"\n         original_prompt = self.system_prompt\n-        self.system_prompt = f\"{original_prompt}\\n\\nYou",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 228,
+      "file": "agents.py",
+      "line": 129,
+      "reason": "System prompt injection",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -127,7 +127,7 @@\n         original_prompt = self.system_prompt\n         self.system_prompt = f\"{original_prompt}\\n\\nYour current task: {self.task}\"\n         result = super().step(state, tool_registry)\n-        self.system_pro",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 231,
+      "file": "agents.py",
+      "line": 146,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -144,7 +144,7 @@\n \n     def route(self, state: AgentState) -> str | None:\n         \"\"\"Decide which worker to hand off to, or None if done.\"\"\"\n-        messages = [{\"role\": \"system\", \"content\": self.system_prompt}] + state.mes",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 232,
+      "file": "agents.py",
+      "line": 146,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -144,7 +144,7 @@\n \n     def route(self, state: AgentState) -> str | None:\n         \"\"\"Decide which worker to hand off to, or None if done.\"\"\"\n-        messages = [{\"role\": \"system\", \"content\": self.system_prompt}] + state.mes",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 233,
+      "file": "agents.py",
+      "line": 146,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -144,7 +144,7 @@\n \n     def route(self, state: AgentState) -> str | None:\n         \"\"\"Decide which worker to hand off to, or None if done.\"\"\"\n-        messages = [{\"role\": \"system\", \"content\": self.system_prompt}] + state.mes",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 235,
+      "file": "agents.py",
+      "line": 146,
+      "reason": "Agent message construction",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -144,7 +144,7 @@\n \n     def route(self, state: AgentState) -> str | None:\n         \"\"\"Decide which worker to hand off to, or None if done.\"\"\"\n-        messages = [{\"role\": \"system\", \"content\": self.system_prompt}] + state.mes",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 242,
+      "file": "agents.py",
+      "line": 154,
+      "reason": "Routing decision logic",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -152,7 +152,7 @@\n             return None\n \n         if content.upper().startswith(\"ROUTE:\"):\n-            target = content.split(\":\", 1)[1].strip()\n+            target = content.split(\":\", 2)[1].strip()\n             if targe",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 248,
+      "file": "agents.py",
+      "line": 164,
+      "reason": "Routing decision logic",
+      "diff": "--- src/excelsior_harness/agents.py\n+++ src/excelsior_harness/agents.py\n@@ -162,5 +162,5 @@\n             )\n \n         logger.warning(\"Could not parse routing from: %r\", content)\n-        return self.workers[0] if self.workers else None\n+        return self.workers[1] if self.workers else None",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 255,
+      "file": "context.py",
+      "line": 37,
+      "reason": "Token counting logic",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -35,7 +35,7 @@\n         Uses a simplified per-message overhead of 4 tokens (role + delimiters),\n         matching the OpenAI token counting convention.\n         \"\"\"\n-        total = 0\n+        total = 1\n         for msg in ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 259,
+      "file": "context.py",
+      "line": 39,
+      "reason": "Token counting logic",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -37,7 +37,7 @@\n         \"\"\"\n         total = 0\n         for msg in messages:\n-            total += 4  # role + structural overhead\n+            total += 5  # role + structural overhead\n             total += self.count(msg.g",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 263,
+      "file": "context.py",
+      "line": 40,
+      "reason": "Token counting logic",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -38,7 +38,7 @@\n         total = 0\n         for msg in messages:\n             total += 4  # role + structural overhead\n-            total += self.count(msg.get(\"content\", \"\"))\n+            total += self.count(msg.get(\"conten",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 271,
+      "file": "context.py",
+      "line": 72,
+      "reason": "Context truncation boundary",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -70,7 +70,7 @@\n             return []\n \n         total = self._counter.count_messages(messages)\n-        if total <= self.max_context_tokens:\n+        if total < self.max_context_tokens:\n             return list(messages)\n ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 276,
+      "file": "context.py",
+      "line": 78,
+      "reason": "Message slice mutation",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -76,7 +76,7 @@\n         # Split into: system | middle | recent\n         system = [messages[0]]\n         recent = messages[-self.keep_recent :] if self.keep_recent else []\n-        middle = messages[1 : len(messages) - len(r",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 277,
+      "file": "context.py",
+      "line": 78,
+      "reason": "Message slice mutation",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -76,7 +76,7 @@\n         # Split into: system | middle | recent\n         system = [messages[0]]\n         recent = messages[-self.keep_recent :] if self.keep_recent else []\n-        middle = messages[1 : len(messages) - len(r",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 278,
+      "file": "context.py",
+      "line": 78,
+      "reason": "Message slice mutation",
+      "diff": "--- src/excelsior_harness/context.py\n+++ src/excelsior_harness/context.py\n@@ -76,7 +76,7 @@\n         # Split into: system | middle | recent\n         system = [messages[0]]\n         recent = messages[-self.keep_recent :] if self.keep_recent else []\n-        middle = messages[1 : len(messages) - len(r",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 315,
+      "file": "orchestrator.py",
+      "line": 48,
+      "reason": "Unclassified core-module mutation",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -42,11 +42,6 @@\n     frameworks like agenkit and shekel.\n     \"\"\"\n \n-    @retry(\n-        wait=wait_exponential(multiplier=1, max=10) + wait_random(0, 2),\n-        stop=stop_after_attempt(3),\n-        reraise=True",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 316,
+      "file": "orchestrator.py",
+      "line": 50,
+      "reason": "Tool execution path mutation",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -48,7 +48,7 @@\n         reraise=True,\n     )\n     def _inner() -> dict:\n-        result = safe_execute(registry, tool_name, arguments)\n+        result = None\n         if result[\"error\"] is not None:\n             r",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 317,
+      "file": "orchestrator.py",
+      "line": 51,
+      "reason": "Tool execution path mutation",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -49,7 +49,7 @@\n     )\n     def _inner() -> dict:\n         result = safe_execute(registry, tool_name, arguments)\n-        if result[\"error\"] is not None:\n+        if result[\"XXerrorXX\"] is not None:\n             ra",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 318,
+      "file": "orchestrator.py",
+      "line": 51,
+      "reason": "Tool execution path mutation",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -49,7 +49,7 @@\n     )\n     def _inner() -> dict:\n         result = safe_execute(registry, tool_name, arguments)\n-        if result[\"error\"] is not None:\n+        if result[\"error\"] is  None:\n             raise Run",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 330,
+      "file": "orchestrator.py",
+      "line": 107,
+      "reason": "Break removal -- loop termination",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -105,7 +105,7 @@\n             if state.step_count >= self.max_steps:\n                 state = state.terminate(TerminationReason.MAX_STEPS)\n                 logger.info(\"Terminated: max steps (%d) reached\", self.ma",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Loop convergence: runLoop outer done-check absorbs inner check removal"
+    },
+    {
+      "id": 332,
+      "file": "orchestrator.py",
+      "line": 111,
+      "reason": "Orchestrator state management",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -109,7 +109,7 @@\n \n             # \u2500\u2500 2. Prepare context (truncate if needed) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n             truncated_messages = self.context_manager.prepare(state.messages)\n-            working_state = state.model_c",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": ""
+    },
+    {
+      "id": 350,
+      "file": "orchestrator.py",
+      "line": 135,
+      "reason": "Orchestrator state management",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -133,7 +133,7 @@\n             # \u2500\u2500 6. Record cost via budget tracker \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n             # Find the usage from the latest agent step\n             tokens_this_step_prompt = (\n-                new_stat",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean tracks absolute token counts, not per-step deltas"
+    },
+    {
+      "id": 352,
+      "file": "orchestrator.py",
+      "line": 138,
+      "reason": "Orchestrator state management",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -136,7 +136,7 @@\n                 new_state.prompt_tokens - state.prompt_tokens\n             )\n             tokens_this_step_completion = (\n-                new_state.completion_tokens - state.completion_tokens\n+ ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean tracks absolute token counts, not per-step deltas"
+    },
+    {
+      "id": 357,
+      "file": "orchestrator.py",
+      "line": 154,
+      "reason": "Break removal -- loop termination",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -152,7 +152,7 @@\n                     self.budget_tracker.total_cost,\n                     self.budget_tracker.max_budget_usd,\n                 )\n-                break\n+                continue\n \n             # U",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Loop convergence: runLoop outer done-check absorbs inner check removal"
+    },
+    {
+      "id": 360,
+      "file": "orchestrator.py",
+      "line": 163,
+      "reason": "Orchestrator state management",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -161,7 +161,7 @@\n                 update={\n                     \"cost_usd\": new_state.cost_usd + cost,\n                     # Restore full messages (not truncated)\n-                    \"messages\": state.messages\n+",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean models checkpoints as Nat counter, not dict structure"
+    },
+    {
+      "id": 368,
+      "file": "orchestrator.py",
+      "line": 185,
+      "reason": "Break removal -- loop termination",
+      "diff": "--- src/excelsior_harness/orchestrator.py\n+++ src/excelsior_harness/orchestrator.py\n@@ -183,7 +183,7 @@\n             if next_agent is None:\n                 state = state.terminate(TerminationReason.TASK_COMPLETE)\n                 logger.info(\"Terminated: task complete\")\n-                break\n+    ",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Loop convergence: runLoop outer done-check absorbs inner check removal"
+    },
+    {
+      "id": 413,
+      "file": "state.py",
+      "line": 60,
+      "reason": "Checkpoint structure key mutation",
+      "diff": "--- src/excelsior_harness/state.py\n+++ src/excelsior_harness/state.py\n@@ -58,7 +58,7 @@\n             \"step_count\": self.step_count,\n             \"current_agent\": self.current_agent,\n             \"total_tokens\": self.total_tokens,\n-            \"cost_usd\": self.cost_usd,\n+            \"XXcost_usdXX\": s",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean models checkpoints as Nat counter, not dict structure"
+    },
+    {
+      "id": 414,
+      "file": "state.py",
+      "line": 61,
+      "reason": "Checkpoint structure key mutation",
+      "diff": "--- src/excelsior_harness/state.py\n+++ src/excelsior_harness/state.py\n@@ -59,7 +59,7 @@\n             \"current_agent\": self.current_agent,\n             \"total_tokens\": self.total_tokens,\n             \"cost_usd\": self.cost_usd,\n-            \"num_messages\": len(self.messages),\n+            \"XXnum_messa",
+      "lean_applicable": false,
+      "lean_catches": false,
+      "lean_detail": "N/A: Lean models checkpoints as Nat counter, not dict structure"
+    }
+  ],
+  "lean_mappings": [
+    {
+      "mutant_id": 57,
+      "applicable": false,
+      "rationale": "Lean uses abstract Nat cost; /1001 vs /1000 is rate-level detail"
+    },
+    {
+      "mutant_id": 61,
+      "applicable": false,
+      "rationale": "Lean uses abstract Nat cost; /1001 vs /1000 is rate-level detail"
+    },
+    {
+      "mutant_id": 64,
+      "applicable": true,
+      "rationale": "Cost assignment instead of accumulation (spec lacks cost-monotonicity)"
+    },
+    {
+      "mutant_id": 66,
+      "applicable": false,
+      "rationale": "Per-model cost tracking not modeled in spec"
+    },
+    {
+      "mutant_id": 67,
+      "applicable": false,
+      "rationale": "Per-model cost tracking not modeled in spec"
+    },
+    {
+      "mutant_id": 68,
+      "applicable": false,
+      "rationale": "Per-model cost tracking not modeled in spec"
+    },
+    {
+      "mutant_id": 69,
+      "applicable": true,
+      "rationale": "Budget threshold off-by-one (>= vs >)"
+    },
+    {
+      "mutant_id": 330,
+      "applicable": false,
+      "rationale": "Loop convergence: runLoop outer done-check absorbs inner check removal"
+    },
+    {
+      "mutant_id": 350,
+      "applicable": false,
+      "rationale": "Lean tracks absolute token counts, not per-step deltas"
+    },
+    {
+      "mutant_id": 352,
+      "applicable": false,
+      "rationale": "Lean tracks absolute token counts, not per-step deltas"
+    },
+    {
+      "mutant_id": 357,
+      "applicable": false,
+      "rationale": "Loop convergence: runLoop outer done-check absorbs inner check removal"
+    },
+    {
+      "mutant_id": 360,
+      "applicable": false,
+      "rationale": "Lean models checkpoints as Nat counter, not dict structure"
+    },
+    {
+      "mutant_id": 368,
+      "applicable": false,
+      "rationale": "Loop convergence: runLoop outer done-check absorbs inner check removal"
+    },
+    {
+      "mutant_id": 413,
+      "applicable": false,
+      "rationale": "Lean models checkpoints as Nat counter, not dict structure"
+    },
+    {
+      "mutant_id": 414,
+      "applicable": false,
+      "rationale": "Lean models checkpoints as Nat counter, not dict structure"
+    }
+  ]
+}

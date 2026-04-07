@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Mutation testing
+.mutmut-cache
+mutants/
+
+# Property-based testing
+.hypothesis/
+
+# Paper build artifacts
+paper/*.pdf
+paper/*.aux
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.toc
+
+# macOS
+.DS_Store

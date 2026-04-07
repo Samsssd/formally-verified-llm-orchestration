@@ -1,0 +1,337 @@
+{
+  "metadata": {
+    "timestamp": "2026-04-04T23:28:09",
+    "method": "spec-guided mutation generation",
+    "source": "Lean 4 HarnessVerification.lean wf predicate"
+  },
+  "invariants": [
+    {
+      "id": "P1",
+      "name": "Token accounting identity",
+      "lean_text": "s.tTok = s.pTok + s.cTok",
+      "description": "Total tokens must equal prompt + completion tokens"
+    },
+    {
+      "id": "P2",
+      "name": "Budget safety",
+      "lean_text": "s.reason != some .budget_exceeded -> s.cost <= s.maxBudget",
+      "description": "Unless budget was exceeded, cost must be within budget"
+    },
+    {
+      "id": "P3",
+      "name": "Checkpoint monotonicity",
+      "lean_text": "s.ckpts <= s.step",
+      "description": "Number of checkpoints cannot exceed number of steps"
+    },
+    {
+      "id": "P4",
+      "name": "Step bound",
+      "lean_text": "s.step <= s.maxSteps + 1",
+      "description": "Step count bounded by maxSteps + 1"
+    },
+    {
+      "id": "P5",
+      "name": "Termination consistency",
+      "lean_text": "s.reason = some .budget_exceeded -> s.done = true",
+      "description": "If reason is budget_exceeded then done must be true"
+    }
+  ],
+  "theorems": [
+    {
+      "id": "T1",
+      "name": "step_preserves_wf",
+      "description": "All 5 invariants survive one step (4 paths x 5 props)"
+    },
+    {
+      "id": "T2",
+      "name": "loop_budget_safe",
+      "description": "Budget ceiling across full loop"
+    },
+    {
+      "id": "T3",
+      "name": "loop_terminates",
+      "description": "Loop always terminates within maxSteps"
+    },
+    {
+      "id": "T4",
+      "name": "loop_tokens",
+      "description": "Token accounting across loop"
+    },
+    {
+      "id": "T5",
+      "name": "tool_isolation",
+      "description": "Per-agent tool permissions enforced"
+    },
+    {
+      "id": "T6",
+      "name": "loop_ckpts",
+      "description": "Checkpoints <= steps across loop"
+    }
+  ],
+  "mutations": [
+    {
+      "id": "SGM-P1a",
+      "invariant": "P1",
+      "description": "Drop completion tokens from total (tTok += pTok only)",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:110:16: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:211:13: omega could not prove the goal:",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "step_preserves_tokens",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 4,
+      "python_tests_total": 65,
+      "prop_caught": true,
+      "prop_tests_failed": [
+        "tests/test_properties.py::test_prop_token_accounting_single",
+        "tests/test_properties.py::test_prop_token_accounting_multi"
+      ]
+    },
+    {
+      "id": "SGM-P1b",
+      "invariant": "P1",
+      "description": "Double-count prompt tokens in total (tTok += pTok + pTok)",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:110:16: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:211:13: omega could not prove the goal:",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "step_preserves_tokens",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 4,
+      "python_tests_total": 65,
+      "prop_caught": true,
+      "prop_tests_failed": [
+        "tests/test_properties.py::test_prop_token_accounting_single",
+        "tests/test_properties.py::test_prop_token_accounting_multi"
+      ]
+    },
+    {
+      "id": "SGM-P2a",
+      "invariant": "P2",
+      "description": "Invert budget check (> to <), effectively disabling it",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:116:37: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:120:37: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:282:34: Tactic `rewrite` failed: Did not find an occurrence of the pattern",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "continue_adds_ckpt",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 13,
+      "python_tests_total": 65,
+      "prop_caught": true,
+      "prop_tests_failed": [
+        "tests/test_properties.py::test_prop_budget_enforcement",
+        "tests/test_properties.py::test_prop_budget_always_catches_large_cost",
+        "tests/test_properties.py::test_prop_budget_cost_non_negative",
+        "tests/test_properties.py::test_prop_budget_cost_proportional",
+        "tests/test_properties.py::test_prop_cost_matches_rate_table"
+      ]
+    },
+    {
+      "id": "SGM-P2b",
+      "invariant": "P2",
+      "description": "Weaken budget check (> to >=), off-by-one",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:282:34: Tactic `rewrite` failed: Did not find an occurrence of the pattern",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "continue_adds_ckpt"
+      ],
+      "python_caught": false,
+      "python_tests_failed": 0,
+      "python_tests_total": 65,
+      "prop_caught": false,
+      "prop_tests_failed": []
+    },
+    {
+      "id": "SGM-P2c",
+      "invariant": "P2",
+      "description": "Break cost accumulation (cost = new_cost instead of cost += new_cost)",
+      "lean_caught": false,
+      "lean_errors": [],
+      "lean_broken_theorems": [],
+      "python_caught": false,
+      "python_tests_failed": 0,
+      "python_tests_total": 65,
+      "prop_caught": false,
+      "prop_tests_failed": []
+    },
+    {
+      "id": "SGM-P3a",
+      "invariant": "P3",
+      "description": "Double checkpoint increment (ckpts + 2 instead of ckpts + 1)",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:120:47: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:262:26: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:281:53: unsolved goals",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "continue_adds_ckpt",
+        "step_ckpt_bounded",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 4,
+      "python_tests_total": 65,
+      "prop_caught": true,
+      "prop_tests_failed": [
+        "tests/test_properties.py::test_prop_checkpoint_accumulates",
+        "tests/test_properties.py::test_prop_checkpoint_history_preserved"
+      ]
+    },
+    {
+      "id": "SGM-P3b",
+      "invariant": "P3",
+      "description": "Add checkpoint in max_steps termination path",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:106:35: Application type mismatch: The argument",
+        "error: Lean4Learn/HarnessVerification.lean:259:11: Type mismatch",
+        "error: Lean4Learn/HarnessVerification.lean:285:68: unsolved goals",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "max_steps_no_ckpt",
+        "step_ckpt_bounded",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 1,
+      "python_tests_total": 65,
+      "prop_caught": false,
+      "prop_tests_failed": []
+    },
+    {
+      "id": "SGM-P4a",
+      "invariant": "P4",
+      "description": "Double step increment (step + 2 instead of step + 1)",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:161:16: unsolved goals",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "step_inc_or_done"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 5,
+      "python_tests_total": 65,
+      "prop_caught": true,
+      "prop_tests_failed": [
+        "tests/test_properties.py::test_prop_step_increment",
+        "tests/test_properties.py::test_prop_step_equals_call_count"
+      ]
+    },
+    {
+      "id": "SGM-P4b",
+      "invariant": "P4",
+      "description": "Don't increment step (step stays at s.step)",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:120:47: omega could not prove the goal:",
+        "error: Lean4Learn/HarnessVerification.lean:161:16: unsolved goals",
+        "error: Lean4Learn/HarnessVerification.lean:262:26: omega could not prove the goal:",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "step_ckpt_bounded",
+        "step_inc_or_done",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 1,
+      "python_tests_total": 1,
+      "prop_caught": true,
+      "prop_tests_failed": [
+        "tests/test_properties.py::test_prop_step_increment",
+        "tests/test_properties.py::test_prop_step_equals_call_count"
+      ]
+    },
+    {
+      "id": "SGM-P5a",
+      "invariant": "P5",
+      "description": "Budget exceeded but not done (done=false in budget_exceeded path)",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:110:75: Type mismatch",
+        "error: Lean4Learn/HarnessVerification.lean:158:4: unsolved goals",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "step_inc_or_done",
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 1,
+      "python_tests_total": 65,
+      "prop_caught": false,
+      "prop_tests_failed": []
+    },
+    {
+      "id": "SGM-P5b",
+      "invariant": "P5",
+      "description": "Wrong reason: set task_complete instead of budget_exceeded",
+      "lean_caught": true,
+      "lean_errors": [
+        "error: Lean4Learn/HarnessVerification.lean:110:43: Application type mismatch: The argument",
+        "error: Lean exited with code 1",
+        "error: build failed"
+      ],
+      "lean_broken_theorems": [
+        "step_preserves_wf"
+      ],
+      "python_caught": true,
+      "python_tests_failed": 1,
+      "python_tests_total": 65,
+      "prop_caught": false,
+      "prop_tests_failed": []
+    }
+  ],
+  "comparison": {
+    "spec_guided": {
+      "total_mutations": 11,
+      "lean_detection_rate": 0.9090909090909091,
+      "python_detection_rate": 0.8181818181818182,
+      "property_test_detection_rate": 0.5454545454545454,
+      "both_caught": 9,
+      "lean_only": 1,
+      "python_only": 0,
+      "neither": 1
+    },
+    "random_baseline": {
+      "total_mutants": 420,
+      "mutation_score_raw": 0.552,
+      "mutation_score_adjusted": 0.795,
+      "lean_applicable": 2,
+      "lean_caught": 1
+    }
+  }
+}
